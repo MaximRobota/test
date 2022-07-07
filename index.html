@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8">
+      <title>Test</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <button id='undo'>Undo</button>
+    <button id='redo'>Redo</button>
+    <div id="content"></div>
+    <script type="text/javascript">
+        let content = document.getElementById('content');
+        let history = [[]];
+        let historyIndex = 0;
+
+        function operation(fn) {
+            history = history.slice(0, historyIndex + 1);
+            const newVersion = fn(history[historyIndex]);
+            historyIndex++;
+            history.push(newVersion);
+            reload();
+        }
+
+        function insert(paragraph) {
+            operation(function (data) {
+                const newVersion = data.slice();
+                newVersion.push(
+                    {
+                        id: paragraph.id,
+                        color: paragraph.color,
+                        text: paragraph.text
+                    }
+                );
+                return newVersion;
+            });
+        }
+
+        function remove(id) {
+            operation(function (data) {
+                return data.filter(function (paragraph) {
+                    return paragraph.id !== id;
+                });
+            });
+        }
+
+        function reload() {
+            content.innerHTML = '';
+            history[historyIndex].forEach(function (p) {
+                const elem = content.appendChild(document.createElement('p'));
+                elem.style.color = p.color;
+                elem.innerHTML = p.text;
+            });
+
+            undo.disabled = (historyIndex !== 0) ? '' : 'disabled';
+            redo.disabled = (historyIndex !== history.length - 1) ? '' : 'disabled';
+        }
+
+        undo.addEventListener('click', function () {
+            if (historyIndex > 0) historyIndex--;
+            reload();
+        });
+
+        redo.addEventListener('click', function () {
+            if (historyIndex < history.length) historyIndex++;
+            reload();
+        });
+
+        reload();
+    </script>
+  </body>
+</html>
