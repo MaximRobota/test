@@ -10,15 +10,17 @@
     <button id='redo'>Redo</button>
     <div id="content"></div>
     <script type="text/javascript">
-        let content = document.getElementById('content');
-        let history = [[]];
+        const content = document.getElementById('content');
+        const undo = document.getElementById('undo');
+        const redo = document.getElementById('redo');
+        let editorHistory = [[]];
         let historyIndex = 0;
 
         function operation(fn) {
-            history = history.slice(0, historyIndex + 1);
-            const newVersion = fn(history[historyIndex]);
+            editorHistory = editorHistory.slice(0, historyIndex + 1);
+            const newVersion = fn(editorHistory[historyIndex]);
             historyIndex++;
-            history.push(newVersion);
+            editorHistory.push(newVersion);
             reload();
         }
 
@@ -44,16 +46,23 @@
             });
         }
 
+        function update(id, p) {
+            operation(function (data) {
+                const newVersion = data.slice();
+                return newVersion.map((x, index) => x.id === id ? newVersion[index] = p : x);
+            });
+        }
+
         function reload() {
             content.innerHTML = '';
-            history[historyIndex].forEach(function (p) {
+            editorHistory[historyIndex].forEach(function (p) {
                 const elem = content.appendChild(document.createElement('p'));
                 elem.style.color = p.color;
                 elem.innerHTML = p.text;
             });
 
             undo.disabled = (historyIndex !== 0) ? '' : 'disabled';
-            redo.disabled = (historyIndex !== history.length - 1) ? '' : 'disabled';
+            redo.disabled = (historyIndex !== editorHistory.length - 1) ? '' : 'disabled';
         }
 
         undo.addEventListener('click', function () {
@@ -62,7 +71,7 @@
         });
 
         redo.addEventListener('click', function () {
-            if (historyIndex < history.length) historyIndex++;
+            if (historyIndex < editorHistory.length) historyIndex++;
             reload();
         });
 
